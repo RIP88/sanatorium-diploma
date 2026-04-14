@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/6.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
-
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -25,7 +25,11 @@ SECRET_KEY = 'django-insecure-kn6swbx=3tmcas944x8ar0$$*^8*%h+wxp0gamvslst!d$6dwq
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
+CSRF_TRUSTED_ORIGINS = [
+    'https://rip88-sanatorium-diploma-1778.twc1.net',
+    'http://rip88-sanatorium-diploma-1778.twc1.net',
+]
 
 
 # Application definition
@@ -104,11 +108,12 @@ LANGUAGE_CODE = 'ru-RU'
 TIME_ZONE = 'Europe/Moscow'
 
 # Статические файлы (CSS, JS)
-STATIC_URL = 'static/'
-STATICFILES_DIRS = [
-    BASE_DIR / 'core' / 'static',
-]
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # <-- Важно: слэш и имя папки
 
-# Медиа-файлы (картинки)
+# Медиа файлы (картинки)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Убираем предупреждения о первичных ключах
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
