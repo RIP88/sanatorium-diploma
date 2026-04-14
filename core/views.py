@@ -132,27 +132,27 @@ def user_logout(request):
 # АДМИН-ПАНЕЛЬ (КАСТОМНАЯ)
 # ==========================================
 
-def is_admin(user):
-    return user.is_superuser or user.is_staff
+#def is_admin(user):
+    #return user.is_superuser or user.is_staff
 
-@user_passes_test(is_admin, login_url='/admin/')
-def admin_dashboard(request):
-    """Кастомная панель администратора"""
-    bookings = Booking.objects.all().select_related('room', 'user').order_by('-created_at')
+#@user_passes_test(is_admin, login_url='/admin/')
+#def admin_dashboard(request):
+    #"""Кастомная панель администратора"""
+    #bookings = Booking.objects.all().select_related('room', 'user').order_by('-created_at')
     
-    context = {
-        'bookings': bookings,
-        'total_bookings': bookings.count(),
-        'confirmed_bookings': bookings.filter(status='CONFIRMED').count(),
-        'pending_bookings': bookings.filter(status='NEW').count(),
-    }
-    return render(request, 'core/admin_dashboard.html', context)
+    #context = {
+        #'bookings': bookings,
+        #'total_bookings': bookings.count(),
+        #'confirmed_bookings': bookings.filter(status='CONFIRMED').count(),
+        #'pending_bookings': bookings.filter(status='NEW').count(),
+    #}
+    #return render(request, 'core/admin_dashboard.html', context)
 
-@user_passes_test(is_admin, login_url='/admin/')
-def change_booking_status(request, booking_id, status):
-    """Изменение статуса брони"""
-    booking = get_object_or_404(Booking, id=booking_id)
-    booking.status = status
-    booking.save()
-    messages.success(request, f'Статус брони изменен на {status}')
-    return redirect('admin_dashboard')
+#@user_passes_test(is_admin, login_url='/admin/')
+#def change_booking_status(request, booking_id, status):
+    #"""Изменение статуса брони"""
+    #booking = get_object_or_404(Booking, id=booking_id)
+    #booking.status = status
+    #booking.save()
+    #messages.success(request, f'Статус брони изменен на {status}')
+    #return redirect('admin_dashboard')
