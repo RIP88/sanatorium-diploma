@@ -89,3 +89,19 @@ class RegisterForm(UserCreationForm):
             'class': 'form-control', 
             'placeholder': 'Подтверждение пароля'
         })
+
+from django import forms
+from .models import Room
+
+class RoomForm(forms.ModelForm):
+    class Meta:
+        model = Room
+        fields = ['title', 'category', 'price', 'description', 'image', 'is_available']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'category': forms.Select(attrs={'class': 'form-control'}),
+            'price': forms.NumberInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'image': forms.FileInput(attrs={'class': 'form-control'}),
+            'is_available': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
