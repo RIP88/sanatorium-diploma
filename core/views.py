@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.db.models import Sum, Count
 from django.db.models.functions import TruncMonth
+from .forms import RoomForm
 
 from .models import Room, Booking
 from .forms import BookingForm, LoginForm, RegisterForm
@@ -135,9 +136,20 @@ def user_logout(request):
 def is_admin(user):
     return user.is_superuser or user.is_staff
 
+
 @user_passes_test(is_admin, login_url='/admin/')
 def admin_dashboard(request):
-    """Кастомная панель администратора"""
+    # Обработка добавления нового номера
+    if request.method == 'POST':
+        form = RoomForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Номер успешно добавлен!')
+            return redirect('admin_dashboard') # Перезагружаем страницу
+    else:
+        form = RoomForm()
+
+    # Получаем все брони для статистики
     bookings = Booking.objects.all().select_related('room', 'user').order_by('-created_at')
     
     context = {
@@ -145,6 +157,7 @@ def admin_dashboard(request):
         'total_bookings': bookings.count(),
         'confirmed_bookings': bookings.filter(status='CONFIRMED').count(),
         'pending_bookings': bookings.filter(status='NEW').count(),
+        'form': form, # Передаем форму в шаблон
     }
     return render(request, 'core/admin_dashboard.html', context)
 
