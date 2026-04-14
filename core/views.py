@@ -1,27 +1,31 @@
-from django.shortcuts import render
-from .models import Room
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib import messages
+from django.db.models import Sum, Count
+from django.db.models.functions import TruncMonth
+
+from .models import Room, Booking
+from .forms import BookingForm, LoginForm, RegisterForm
+
+# ==========================================
+# ОСНОВНЫЕ СТРАНИЦЫ
+# ==========================================
 
 def index(request):
-    rooms = Room.objects.filter(is_available=True)  # Показываем только доступные номера
+    """Главная страница со списком номеров"""
+    rooms = Room.objects.filter(is_available=True)
     return render(request, 'core/index.html', {'rooms': rooms})
 
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import Room, Booking
-from .forms import BookingForm
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-
 def book_room(request, room_id):
+    """Страница бронирования номера"""
     room = get_object_or_404(Room, id=room_id)
     
     if request.method == 'POST':
-        # Передаем данные POST и файлы (если есть)
         form = BookingForm(request.POST, request.FILES)
-        
         if form.is_valid():
             booking = form.save(commit=False)
             booking.room = room
-            # Если пользователь не авторизован, поле user должно быть nullable в модели
             if request.user.is_authenticated:
                 booking.user = request.user
             
@@ -34,19 +38,16 @@ def book_room(request, room_id):
         else:
             messages.error(request, 'Пожалуйста, исправьте ошибки в форме.')
     else:
-        # При GET запросе создаем пустую форму
         form = BookingForm()
     
     return render(request, 'core/book_room.html', {'form': form, 'room': room})
 
 def analytics(request):
-    # 1. Общая выручка (сумма цен подтвержденных броней)
-    # Примечание: для простоты считаем полную стоимость брони
+    """Страница аналитики (доступна всем, но лучше ограничить админами)"""
     total_revenue = Booking.objects.filter(status='CONFIRMED').aggregate(
         total=Sum('room__price')
     )['total'] or 0
 
-    # 2. Количество бронирований по месяцам (для графика)
     bookings_by_month = Booking.objects.filter(
         status__in=['NEW', 'CONFIRMED']
     ).annotate(
@@ -55,11 +56,8 @@ def analytics(request):
         count=Count('id')
     ).order_by('month')
 
-    # Подготовка данных для графика
     labels = [item['month'].strftime('%B %Y') for item in bookings_by_month]
     data = [item['count'] for item in bookings_by_month]
-
-    # 3. Последние брони для таблицы
     recent_bookings = Booking.objects.all().order_by('-created_at')[:10]
 
     context = {
@@ -71,16 +69,11 @@ def analytics(request):
     return render(request, 'core/analytics.html', context)
 
 # ==========================================
-# НОВЫЕ ФУНКЦИИ ДЛЯ АВТОРИЗАЦИИ
+# АВТОРИЗАЦИЯ
 # ==========================================
 
-from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login
-from django.contrib import messages
-from .forms import LoginForm # Убедись, что импорт есть
-
 def user_login(request):
-    # Если пользователь уже вошел, перенаправляем его
+    """Вход в систему с перенаправлением админов в панель управления"""
     if request.user.is_authenticated:
         if request.user.is_staff:
             return redirect('admin:index')
@@ -92,19 +85,17 @@ def user_login(request):
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
             
-            # Проверяем логин и пароль
             user = authenticate(request, username=username, password=password)
             
             if user is not None:
                 login(request, user)
                 messages.success(request, f'Добро пожаловать, {user.username}!')
                 
-                # === ВОТ ЗДЕСЬ МАГИЯ ===
-                # Если пользователь является суперпользователем ИЛИ персоналом (админом)
+                # ГЛАВНОЕ ИЗМЕНЕНИЕ: Админы идут в /admin/, обычные юзеры в /profile/
                 if user.is_staff or user.is_superuser:
-                    return redirect('admin:index') # Перекидываем в админку Django
+                    return redirect('admin:index')
                 else:
-                    return redirect('profile') # Обычных юзеров кидаем в профиль
+                    return redirect('profile')
             else:
                 messages.error(request, 'Неверное имя пользователя или пароль.')
         else:
@@ -113,9 +104,9 @@ def user_login(request):
         form = LoginForm()
     
     return render(request, 'core/login.html', {'form': form})
-    
-# Страница регистрации
+
 def user_register(request):
+    """Регистрация нового пользователя"""
     if request.method == 'POST':
         form = RegisterForm(request.POST)
         if form.is_valid():
@@ -128,51 +119,43 @@ def user_register(request):
     
     return render(request, 'core/register.html', {'form': form})
 
-# Личный кабинет пользователя
 @login_required
 def user_profile(request):
-    # Получаем только брони текущего пользователя
+    """Личный кабинет пользователя"""
     bookings = Booking.objects.filter(user=request.user).order_by('-created_at')
     return render(request, 'core/profile.html', {'bookings': bookings})
 
-# Выход из системы
 def user_logout(request):
+    """Выход из системы"""
     logout(request)
     messages.info(request, 'Вы вышли из системы.')
     return redirect('index')
 
 # ==========================================
-# ФУНКЦИИ ДЛЯ АДМИН-ПАНЕЛИ (если ещё нет)
+# АДМИН-ПАНЕЛЬ (КАСТОМНАЯ)
 # ==========================================
 
-from django.contrib.auth.decorators import user_passes_test
-
-# Проверка: является ли пользователь админом
 def is_admin(user):
     return user.is_superuser or user.is_staff
 
 @user_passes_test(is_admin, login_url='/admin/')
 def admin_dashboard(request):
-    # Получаем все брони, сортируем по новизне
+    """Кастомная панель администратора"""
     bookings = Booking.objects.all().select_related('room', 'user').order_by('-created_at')
-    
-    # Считаем статистику
-    total_bookings = bookings.count()
-    confirmed_bookings = bookings.filter(status='CONFIRMED').count()
-    pending_bookings = bookings.filter(status='NEW').count()
     
     context = {
         'bookings': bookings,
-        'total_bookings': total_bookings,
-        'confirmed_bookings': confirmed_bookings,
-        'pending_bookings': pending_bookings,
+        'total_bookings': bookings.count(),
+        'confirmed_bookings': bookings.filter(status='CONFIRMED').count(),
+        'pending_bookings': bookings.filter(status='NEW').count(),
     }
     return render(request, 'core/admin_dashboard.html', context)
 
-# Функция для изменения статуса брони (Подтвердить/Отменить)
 @user_passes_test(is_admin, login_url='/admin/')
 def change_booking_status(request, booking_id, status):
+    """Изменение статуса брони"""
     booking = get_object_or_404(Booking, id=booking_id)
     booking.status = status
     booking.save()
+    messages.success(request, f'Статус брони изменен на {status}')
     return redirect('admin_dashboard')
