@@ -74,36 +74,46 @@ def analytics(request):
 # НОВЫЕ ФУНКЦИИ ДЛЯ АВТОРИЗАЦИИ
 # ==========================================
 
-from django.contrib.auth import login, logout, authenticate
-from django.contrib.auth.decorators import login_required
-from .forms import LoginForm, RegisterForm
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login
 from django.contrib import messages
+from .forms import LoginForm # Убедись, что импорт есть
 
-# Страница входа
 def user_login(request):
+    # Если пользователь уже вошел, перенаправляем его
+    if request.user.is_authenticated:
+        if request.user.is_staff:
+            return redirect('admin:index')
+        return redirect('profile')
+
     if request.method == 'POST':
         form = LoginForm(request.POST)
         if form.is_valid():
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
+            
+            # Проверяем логин и пароль
             user = authenticate(request, username=username, password=password)
             
             if user is not None:
                 login(request, user)
                 messages.success(request, f'Добро пожаловать, {user.username}!')
                 
-                # Если админ - redirect на dashboard, иначе - на профиль
-                if user.is_staff:
-                    return redirect('admin_dashboard')
+                # === ВОТ ЗДЕСЬ МАГИЯ ===
+                # Если пользователь является суперпользователем ИЛИ персоналом (админом)
+                if user.is_staff or user.is_superuser:
+                    return redirect('admin:index') # Перекидываем в админку Django
                 else:
-                    return redirect('profile')
+                    return redirect('profile') # Обычных юзеров кидаем в профиль
             else:
                 messages.error(request, 'Неверное имя пользователя или пароль.')
+        else:
+            messages.error(request, 'Пожалуйста, исправьте ошибки в форме.')
     else:
         form = LoginForm()
     
     return render(request, 'core/login.html', {'form': form})
-
+    
 # Страница регистрации
 def user_register(request):
     if request.method == 'POST':
