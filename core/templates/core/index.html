@@ -49,7 +49,46 @@
         <li class="nav-item">
           <a class="nav-link" href="{% url 'index' %}">Номера</a>
         </li>
-        <!-- Ссылки на админку и аналитику удалены -->
+        
+        <!-- Меню для НЕавторизованных пользователей -->
+        {% if not user.is_authenticated %}
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'login' %}">🔐 Войти</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'register' %}">📝 Регистрация</a>
+        </li>
+        
+        <!-- Меню для АВТОРИЗОВАННЫХ пользователей -->
+        {% else %}
+        
+            <!-- Если это АДМИН -->
+            {% if user.is_staff %}
+            <li class="nav-item">
+              <a class="nav-link text-warning" href="{% url 'admin_dashboard' %}">🔒 Админ-панель</a>
+            </li>
+            <li class="nav-item">
+                <span class="nav-link text-light">Админ: {{ user.username }}</span>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'logout' %}">Выйти</a>
+            </li>
+            
+            <!-- Если это ОБЫЧНЫЙ ПОЛЬЗОВАТЕЛЬ -->
+            {% else %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'profile' %}">👤 Мой кабинет</a>
+            </li>
+            <li class="nav-item">
+                <span class="nav-link text-light">Привет, {{ user.username }}!</span>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'logout' %}">Выйти</a>
+            </li>
+            {% endif %}
+        
+        {% endif %}
+
       </ul>
     </div>
   </div>

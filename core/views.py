@@ -62,3 +62,100 @@ def analytics(request):
         'recent_bookings': recent_bookings,
     }
     return render(request, 'core/analytics.html', context)
+
+# ==========================================
+# НОВЫЕ ФУНКЦИИ ДЛЯ АВТОРИЗАЦИИ
+# ==========================================
+
+from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth.decorators import login_required
+from .forms import LoginForm, RegisterForm
+from django.contrib import messages
+
+# Страница входа
+def user_login(request):
+    if request.method == 'POST':
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            password = form.cleaned_data['password']
+            user = authenticate(request, username=username, password=password)
+            
+            if user is not None:
+                login(request, user)
+                messages.success(request, f'Добро пожаловать, {user.username}!')
+                
+                # Если админ - redirect на dashboard, иначе - на профиль
+                if user.is_staff:
+                    return redirect('admin_dashboard')
+                else:
+                    return redirect('profile')
+            else:
+                messages.error(request, 'Неверное имя пользователя или пароль.')
+    else:
+        form = LoginForm()
+    
+    return render(request, 'core/login.html', {'form': form})
+
+# Страница регистрации
+def user_register(request):
+    if request.method == 'POST':
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, 'Регистрация успешна! Добро пожаловать.')
+            return redirect('profile')
+    else:
+        form = RegisterForm()
+    
+    return render(request, 'core/register.html', {'form': form})
+
+# Личный кабинет пользователя
+@login_required
+def user_profile(request):
+    # Получаем только брони текущего пользователя
+    bookings = Booking.objects.filter(user=request.user).order_by('-created_at')
+    return render(request, 'core/profile.html', {'bookings': bookings})
+
+# Выход из системы
+def user_logout(request):
+    logout(request)
+    messages.info(request, 'Вы вышли из системы.')
+    return redirect('index')
+
+# ==========================================
+# ФУНКЦИИ ДЛЯ АДМИН-ПАНЕЛИ (если ещё нет)
+# ==========================================
+
+from django.contrib.auth.decorators import user_passes_test
+
+# Проверка: является ли пользователь админом
+def is_admin(user):
+    return user.is_superuser or user.is_staff
+
+@user_passes_test(is_admin, login_url='/admin/')
+def admin_dashboard(request):
+    # Получаем все брони, сортируем по новизне
+    bookings = Booking.objects.all().select_related('room', 'user').order_by('-created_at')
+    
+    # Считаем статистику
+    total_bookings = bookings.count()
+    confirmed_bookings = bookings.filter(status='CONFIRMED').count()
+    pending_bookings = bookings.filter(status='NEW').count()
+    
+    context = {
+        'bookings': bookings,
+        'total_bookings': total_bookings,
+        'confirmed_bookings': confirmed_bookings,
+        'pending_bookings': pending_bookings,
+    }
+    return render(request, 'core/admin_dashboard.html', context)
+
+# Функция для изменения статуса брони (Подтвердить/Отменить)
+@user_passes_test(is_admin, login_url='/admin/')
+def change_booking_status(request, booking_id, status):
+    booking = get_object_or_404(Booking, id=booking_id)
+    booking.status = status
+    booking.save()
+    return redirect('admin_dashboard')
