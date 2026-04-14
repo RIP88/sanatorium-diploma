@@ -26,6 +26,10 @@ SECRET_KEY = 'django-insecure-kn6swbx=3tmcas944x8ar0$$*^8*%h+wxp0gamvslst!d$6dwq
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
+CSRF_TRUSTED_ORIGINS = [
+    'https://rip88-sanatorium-diploma-1778.twc1.net',
+    'http://rip88-sanatorium-diploma-1778.twc1.net',
+]
 
 
 # Application definition
