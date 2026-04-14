@@ -109,11 +109,11 @@ TIME_ZONE = 'Europe/Moscow'
 
 # Статические файлы (CSS, JS)
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # <-- Важно: слэш и имя папки
 
 # Медиа файлы (картинки)
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Убираем предупреждения о первичных ключах
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
