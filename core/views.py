@@ -136,29 +136,31 @@ def user_logout(request):
 def is_admin(user):
     return user.is_superuser or user.is_staff
 
-
 @user_passes_test(is_admin, login_url='/admin/')
 def admin_dashboard(request):
-    # Обработка добавления нового номера
+    # 1. Обработка добавления нового номера (если пришла форма)
     if request.method == 'POST':
         form = RoomForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()
             messages.success(request, 'Номер успешно добавлен!')
-            return redirect('admin_dashboard') # Перезагружаем страницу
+            return redirect('admin_dashboard') # Перезагружаем страницу, чтобы очистить форму
     else:
         form = RoomForm()
 
-    # Получаем все брони для статистики
+    # 2. Сбор статистики и получение списка бронирований
+    # Сначала получаем queryset bookings
     bookings = Booking.objects.all().select_related('room', 'user').order_by('-created_at')
     
+    # Теперь используем его для подсчетов (ошибка была здесь, так как bookings использовалась до объявления)
     context = {
         'bookings': bookings,
         'total_bookings': bookings.count(),
         'confirmed_bookings': bookings.filter(status='CONFIRMED').count(),
         'pending_bookings': bookings.filter(status='NEW').count(),
-        'form': form, # Передаем форму в шаблон
+        'form': form,  # Обязательно передаем форму в шаблон
     }
+    
     return render(request, 'core/admin_dashboard.html', context)
 
 @user_passes_test(is_admin, login_url='/admin/')
