@@ -73,11 +73,9 @@ def analytics(request):
 # ==========================================
 
 def user_login(request):
-    """Вход в систему с перенаправлением админов в панель управления"""
+    # Если пользователь уже вошел, перенаправляем его на главную
     if request.user.is_authenticated:
-        if request.user.is_staff:
-            return redirect('admin:index')
-        return redirect('profile')
+        return redirect('index')
 
     if request.method == 'POST':
         form = LoginForm(request.POST)
@@ -85,17 +83,16 @@ def user_login(request):
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
             
+            # Проверяем логин и пароль
             user = authenticate(request, username=username, password=password)
             
             if user is not None:
                 login(request, user)
                 messages.success(request, f'Добро пожаловать, {user.username}!')
                 
-                # ГЛАВНОЕ ИЗМЕНЕНИЕ: Админы идут в /admin/, обычные юзеры в /profile/
-                if user.is_staff or user.is_superuser:
-                    return redirect('admin:index')
-                else:
-                    return redirect('profile')
+                # === ИЗМЕНЕНИЕ ЗДЕСЬ ===
+                # Теперь ВСЕХ (и админов тоже) кидаем на главную страницу
+                return redirect('index') 
             else:
                 messages.error(request, 'Неверное имя пользователя или пароль.')
         else:
