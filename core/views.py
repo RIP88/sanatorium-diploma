@@ -15,22 +15,29 @@ def book_room(request, room_id):
     room = get_object_or_404(Room, id=room_id)
     
     if request.method == 'POST':
-        form = BookingForm(request.POST, room=room)
+        # Передаем данные POST и файлы (если есть)
+        form = BookingForm(request.POST, request.FILES)
+        
         if form.is_valid():
             booking = form.save(commit=False)
             booking.room = room
-            booking.user = request.user if request.user.is_authenticated else None
-            booking.save()
-            messages.success(request, f'Заявка на бронирование номера "{room.title}" успешно создана!')
-            return redirect('index')
+            # Если пользователь не авторизован, поле user должно быть nullable в модели
+            if request.user.is_authenticated:
+                booking.user = request.user
+            
+            try:
+                booking.save()
+                messages.success(request, f'Заявка на номер "{room.title}" успешно создана!')
+                return redirect('index')
+            except Exception as e:
+                messages.error(request, f'Ошибка при сохранении: {e}')
+        else:
+            messages.error(request, 'Пожалуйста, исправьте ошибки в форме.')
     else:
-        form = BookingForm(room=room)
+        # При GET запросе создаем пустую форму
+        form = BookingForm()
     
     return render(request, 'core/book_room.html', {'form': form, 'room': room})
-
-from django.db.models import Sum, Count
-from django.db.models.functions import TruncMonth
-from datetime import datetime
 
 def analytics(request):
     # 1. Общая выручка (сумма цен подтвержденных броней)
