@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Бронирование {{ room.title }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h4>Бронирование номера: {{ room.title }}</h4>
+                </div>
+                <div class="card-body">
+                    <p><strong>Категория:</strong> {{ room.get_category_display }}</p>
+                    <p><strong>Цена:</strong> {{ room.price }} ₽ / сутки</p>
+                    
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="id_check_in" class="form-label">Дата заезда</label>
+                            {{ form.check_in }}
+                            {% if form.check_in.errors %}
+                                <div class="text-danger">{{ form.check_in.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_check_out" class="form-label">Дата выезда</label>
+                            {{ form.check_out }}
+                            {% if form.check_out.errors %}
+                                <div class="text-danger">{{ form.check_out.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                        {% endif %}
+
+                        <button type="submit" class="btn btn-primary w-100">Подтвердить бронь</button>
+                    </form>
+                    
+                    <a href="{% url 'index' %}" class="btn btn-secondary w-100 mt-2">Назад к номерам</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
