@@ -1,10 +1,10 @@
 FROM python:3.10-slim
 
 # Установка системных зависимостей
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends \
+    curl \
     build-essential \
     libpq-dev \
-    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Создание пользователя app
@@ -25,5 +25,5 @@ USER app
 # Открываем порт
 EXPOSE 8000
 
-# Команда запуска (можно продублировать здесь, но лучше в настройках Timeweb)
+# Команда запуска
 CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]

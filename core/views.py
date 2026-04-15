@@ -4,10 +4,8 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.db.models import Sum, Count
 from django.db.models.functions import TruncMonth
-from .forms import RoomForm
-
+from .forms import RoomForm, BookingForm, LoginForm, RegisterForm
 from .models import Room, Booking
-from .forms import BookingForm, LoginForm, RegisterForm
 
 # ==========================================
 # ОСНОВНЫЕ СТРАНИЦЫ
@@ -44,15 +42,11 @@ def book_room(request, room_id):
     return render(request, 'core/book_room.html', {'form': form, 'room': room})
 
 def analytics(request):
-    """Страница аналитики (доступна всем, но лучше ограничить админами)"""
-    
-    # --- БЛОК АНАЛИТИКИ (НОВОЕ) ---
-    # Общая выручка
+    """Страница аналитики"""
     total_revenue = Booking.objects.filter(status='CONFIRMED').aggregate(
         total=Sum('room__price')
     )['total'] or 0
 
-    # Данные для графика по месяцам
     bookings_by_month = Booking.objects.filter(
         status__in=['NEW', 'CONFIRMED']
     ).annotate(
@@ -61,31 +55,26 @@ def analytics(request):
         count=Count('id')
     ).order_by('month')
 
-    # Преобразуем данные для Chart.js
-    chart_labels = [item['month'].strftime('%B %Y') for item in bookings_by_month]
-    chart_data = [item['count'] for item in bookings_by_month]
-    # -----------------------------
+    labels = [item['month'].strftime('%B %Y') for item in bookings_by_month]
+    data = [item['count'] for item in bookings_by_month]
+    recent_bookings = Booking.objects.all().order_by('-created_at')[:10]
 
     context = {
-        'bookings': bookings,
-        'total_bookings': bookings.count(),
-        'confirmed_bookings': bookings.filter(status='CONFIRMED').count(),
-        'pending_bookings': bookings.filter(status='NEW').count(),
-        'form': form,
-        # Добавляем данные графиков в контекст
         'total_revenue': total_revenue,
-        'chart_labels': chart_labels,
-        'chart_data': chart_data,
+        'labels': labels,
+        'data': data,
+        'recent_bookings': recent_bookings,
     }
-    
-    return render(request, 'core/admin_dashboard.html', context)
+    return render(request, 'core/analytics.html', context)
+
 # ==========================================
 # АВТОРИЗАЦИЯ
 # ==========================================
 
 def user_login(request):
-    # Если пользователь уже вошел, перенаправляем его на главную
     if request.user.is_authenticated:
+        if request.user.is_staff or request.user.is_superuser:
+            return redirect('admin_dashboard')
         return redirect('index')
 
     if request.method == 'POST':
@@ -94,16 +83,16 @@ def user_login(request):
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
             
-            # Проверяем логин и пароль
             user = authenticate(request, username=username, password=password)
             
             if user is not None:
                 login(request, user)
                 messages.success(request, f'Добро пожаловать, {user.username}!')
                 
-                # === ИЗМЕНЕНИЕ ЗДЕСЬ ===
-                # Теперь ВСЕХ (и админов тоже) кидаем на главную страницу
-                return redirect('index') 
+                if user.is_staff or user.is_superuser:
+                    return redirect('admin_dashboard')
+                else:
+                    return redirect('index')
             else:
                 messages.error(request, 'Неверное имя пользователя или пароль.')
         else:
@@ -146,9 +135,10 @@ def user_logout(request):
 def is_admin(user):
     return user.is_superuser or user.is_staff
 
+
 @user_passes_test(is_admin, login_url='/admin/')
 def admin_dashboard(request):
-    # 1. Обработка формы добавления номера
+    # Обработка добавления нового номера
     if request.method == 'POST':
         form = RoomForm(request.POST, request.FILES)
         if form.is_valid():
@@ -158,20 +148,18 @@ def admin_dashboard(request):
     else:
         form = RoomForm()
 
-    # 2. Получаем все брони
+    # Получаем все брони для статистики
     bookings = Booking.objects.all().select_related('room', 'user').order_by('-created_at')
     
-    # 3. Считаем статистику для карточек
-    total_bookings_count = bookings.count()
-    confirmed_bookings_count = bookings.filter(status='CONFIRMED').count()
-    pending_bookings_count = bookings.filter(status='NEW').count()
+    # Получаем все номера для таблицы управления
+    rooms = Room.objects.all().order_by('-id')
     
-    # 4. Считаем ВЫРУЧКУ (для новой карточки)
+    # Считаем выручку
     total_revenue = Booking.objects.filter(status='CONFIRMED').aggregate(
         total=Sum('room__price')
     )['total'] or 0
 
-    # 5. Готовим данные для ГРАФИКА (по месяцам)
+    # Данные для графика по месяцам
     bookings_by_month = Booking.objects.filter(
         status__in=['NEW', 'CONFIRMED']
     ).annotate(
@@ -183,27 +171,36 @@ def admin_dashboard(request):
     chart_labels = [item['month'].strftime('%B %Y') for item in bookings_by_month]
     chart_data = [item['count'] for item in bookings_by_month]
 
-    rooms = Room.objects.all().order_by('-id')
-
     context = {
         'bookings': bookings,
-        'total_bookings': total_bookings_count,
-        'confirmed_bookings': confirmed_bookings_count,
-        'pending_bookings': pending_bookings_count,
-        'total_revenue': total_revenue,      # Передаем выручку
-        'chart_labels': chart_labels,        # Передаем метки графика
-        'chart_data': chart_data,            # Передаем данные графика
+        'rooms': rooms,
+        'total_bookings': bookings.count(),
+        'confirmed_bookings': bookings.filter(status='CONFIRMED').count(),
+        'pending_bookings': bookings.filter(status='NEW').count(),
+        'total_revenue': total_revenue,
+        'chart_labels': chart_labels,
+        'chart_data': chart_data,
         'form': form,
     }
-    
     return render(request, 'core/admin_dashboard.html', context)
 
-    @user_passes_test(is_admin, login_url='/admin/')
+
+@user_passes_test(is_admin, login_url='/admin/')
+def change_booking_status(request, booking_id, status):
+    """Изменение статуса брони"""
+    booking = get_object_or_404(Booking, id=booking_id)
+    booking.status = status
+    booking.save()
+    messages.success(request, f'Статус брони изменен на {status}')
+    return redirect('admin_dashboard')
+
+
+@user_passes_test(is_admin, login_url='/admin/')
 def delete_room(request, room_id):
     """Удаление номера"""
     room = get_object_or_404(Room, id=room_id)
     
-    # Проверяем, нет ли активных бронирований на этот номер
+    # Проверяем, нет ли активных бронирований
     active_bookings = Booking.objects.filter(room=room, status__in=['NEW', 'CONFIRMED'])
     
     if active_bookings.exists():
@@ -213,13 +210,4 @@ def delete_room(request, room_id):
         room.delete()
         messages.success(request, f'Номер "{room_title}" успешно удален!')
     
-    return redirect('admin_dashboard')
-
-@user_passes_test(is_admin, login_url='/admin/')
-def change_booking_status(request, booking_id, status):
-    """Изменение статуса брони"""
-    booking = get_object_or_404(Booking, id=booking_id)
-    booking.status = status
-    booking.save()
-    messages.success(request, f'Статус брони изменен на {status}')
     return redirect('admin_dashboard')
