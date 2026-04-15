@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Санаторий "Лесная Сказка"</title>
+    
+    <!-- 1. Подключаем Bootstrap (CSS) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- 2. Подключаем ТВОИ стили (style.css) -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'core/style.css' %}">
+    
+    <!-- Сюда можно добавлять дополнительные стили для конкретных страниц -->
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- Шапка сайта (Навигация) -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'index' %}">🌲 Лесная Сказка</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'index' %}#rooms">Номера</a>
+                    </li>
+                    
+                    {% if user.is_authenticated %}
+                        {% if user.is_staff %}
+                            <li class="nav-item">
+                                <a class="nav-link text-warning" href="{% url 'admin:index' %}">🛡️ Админка</a>
+                            </li>
+                        {% endif %}
+                        <li class="nav-item">
+                            <span class="nav-link text-light">Привет, {{ user.username }}!</span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'logout' %}">Выйти</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'login' %}">Войти</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Основное содержимое страницы (сюда вставляется контент из index.html и других) -->
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Подвал сайта -->
+    <footer class="bg-dark text-white text-center py-4 mt-5">
+        <div class="container">
+            <p>&copy; 2026 Санаторий "Лесная Сказка". Все права защищены.</p>
+        </div>
+    </footer>
+
+    <!-- 3. Подключаем Bootstrap (JavaScript) - обязательно в конце body -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Сюда можно добавлять дополнительные скрипты -->
+    {% block extra_js %}{% endblock %}
+
+</body>
+</html>
