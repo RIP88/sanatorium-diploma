@@ -87,34 +87,43 @@
 <script>
     const ctx = document.getElementById('bookingChart').getContext('2d');
     
-    // Передаем данные из Django в JavaScript
-    const labels = {{ chart_labels|safe }}; 
-    const dataValues = {{ chart_data|safe }};
+    // Получаем данные из Django. 
+    // Если данных нет, создаем пустые массивы, чтобы не было ошибки JS.
+    const labels = {{ chart_labels|default:"[]"|safe }}; 
+    const dataValues = {{ chart_data|default:"[]"|safe }};
 
-    new Chart(ctx, {
-        type: 'line', // Тип графика: 'line', 'bar', 'pie'
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Количество заявок',
-                data: dataValues,
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 2,
-                tension: 0.3, // Плавность линий
-                fill: true
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { stepSize: 1 } // Только целые числа
+    // Проверяем, есть ли данные для отображения
+    if (labels.length > 0 && dataValues.length > 0) {
+        new Chart(ctx, {
+            type: 'line', 
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Количество заявок',
+                    data: dataValues,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 2,
+                    tension: 0.3, // Плавность линий
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 } // Только целые числа
+                    }
                 }
             }
-        }
-    });
+        });
+    } else {
+        // Если данных нет, можно вывести сообщение в консоль или на страницу
+        console.log("Нет данных для отображения графика");
+        // Опционально: можно добавить текст внутрь canvas или рядом с ним
+        document.querySelector('.card-body').innerHTML = '<p class="text-muted text-center mb-0">Пока нет данных для построения графика</p>';
+    }
 </script>
 
     <!-- Таблица бронирований -->
