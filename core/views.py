@@ -183,6 +183,8 @@ def admin_dashboard(request):
     chart_labels = [item['month'].strftime('%B %Y') for item in bookings_by_month]
     chart_data = [item['count'] for item in bookings_by_month]
 
+    rooms = Room.objects.all().order_by('-id')
+
     context = {
         'bookings': bookings,
         'total_bookings': total_bookings_count,
@@ -195,6 +197,23 @@ def admin_dashboard(request):
     }
     
     return render(request, 'core/admin_dashboard.html', context)
+
+    @user_passes_test(is_admin, login_url='/admin/')
+def delete_room(request, room_id):
+    """Удаление номера"""
+    room = get_object_or_404(Room, id=room_id)
+    
+    # Проверяем, нет ли активных бронирований на этот номер
+    active_bookings = Booking.objects.filter(room=room, status__in=['NEW', 'CONFIRMED'])
+    
+    if active_bookings.exists():
+        messages.error(request, f'Нельзя удалить номер "{room.title}", так как на него есть активные брони!')
+    else:
+        room_title = room.title
+        room.delete()
+        messages.success(request, f'Номер "{room_title}" успешно удален!')
+    
+    return redirect('admin_dashboard')
 
 @user_passes_test(is_admin, login_url='/admin/')
 def change_booking_status(request, booking_id, status):

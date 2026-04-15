@@ -22,6 +22,8 @@ urlpatterns = [
     path('register/', views.user_register, name='register'),
     path('profile/', views.user_profile, name='profile'),
     path('logout/', views.user_logout, name='logout'),
+
+    path('room/<int:room_id>/delete/', views.delete_room, name='delete_room'),
 ]
 
 # Настройка раздачи медиа-файлов только в режиме отладки (DEBUG=True)
