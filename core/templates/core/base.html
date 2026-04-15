@@ -20,7 +20,11 @@
     <!-- Шапка сайта (Навигация) -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'index' %}">🌲 Лесная Сказка</a>
+            <a class="navbar-brand" href="{% url 'index' %}">
+                {% load static %}
+                <img src="{% static 'core/img/logo.png' %}" alt="Лесная Сказка" height="50" class="d-inline-block align-text-top me-2">
+                Лесная Сказка
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>

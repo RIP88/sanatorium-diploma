@@ -34,27 +34,88 @@
         </div>
     </div>
 
-    <!-- Карточки со статистикой -->
+        <!-- Карточки со статистикой -->
     <div class="row mb-4">
-        <div class="col-md-4">
+        <!-- 1. Всего бронирований -->
+        <div class="col-md-3">
             <div class="card card-stat bg-primary-custom p-3">
                 <h3>{{ total_bookings }}</h3>
                 <p>Всего бронирований</p>
             </div>
         </div>
-        <div class="col-md-4">
+        <!-- 2. Подтверждено -->
+        <div class="col-md-3">
             <div class="card card-stat bg-success-custom p-3">
                 <h3>{{ confirmed_bookings }}</h3>
                 <p>Подтверждено</p>
             </div>
         </div>
-        <div class="col-md-4">
+        <!-- 3. Новых заявок -->
+        <div class="col-md-3">
             <div class="card card-stat bg-warning-custom p-3">
                 <h3>{{ pending_bookings }}</h3>
                 <p>Новых заявок</p>
             </div>
         </div>
+        <!-- 4. Выручка (НОВАЯ КАРТОЧКА) -->
+        <div class="col-md-3">
+            <div class="card card-stat bg-info p-3 text-white">
+                <h3>{{ total_revenue }} ₽</h3>
+                <p>Общая выручка</p>
+            </div>
+        </div>
     </div>
+
+    <!-- БЛОК С ГРАФИКОМ -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">📈 Динамика бронирований по месяцам</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="bookingChart" height="80"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Подключаем библиотеку Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Скрипт для построения графика -->
+<script>
+    const ctx = document.getElementById('bookingChart').getContext('2d');
+    
+    // Передаем данные из Django в JavaScript
+    const labels = {{ chart_labels|safe }}; 
+    const dataValues = {{ chart_data|safe }};
+
+    new Chart(ctx, {
+        type: 'line', // Тип графика: 'line', 'bar', 'pie'
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Количество заявок',
+                data: dataValues,
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 2,
+                tension: 0.3, // Плавность линий
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1 } // Только целые числа
+                }
+            }
+        }
+    });
+</script>
 
     <!-- Таблица бронирований -->
     <div class="table-container">

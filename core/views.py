@@ -45,10 +45,14 @@ def book_room(request, room_id):
 
 def analytics(request):
     """Страница аналитики (доступна всем, но лучше ограничить админами)"""
+    
+    # --- БЛОК АНАЛИТИКИ (НОВОЕ) ---
+    # Общая выручка
     total_revenue = Booking.objects.filter(status='CONFIRMED').aggregate(
         total=Sum('room__price')
     )['total'] or 0
 
+    # Данные для графика по месяцам
     bookings_by_month = Booking.objects.filter(
         status__in=['NEW', 'CONFIRMED']
     ).annotate(
@@ -57,18 +61,24 @@ def analytics(request):
         count=Count('id')
     ).order_by('month')
 
-    labels = [item['month'].strftime('%B %Y') for item in bookings_by_month]
-    data = [item['count'] for item in bookings_by_month]
-    recent_bookings = Booking.objects.all().order_by('-created_at')[:10]
+    # Преобразуем данные для Chart.js
+    chart_labels = [item['month'].strftime('%B %Y') for item in bookings_by_month]
+    chart_data = [item['count'] for item in bookings_by_month]
+    # -----------------------------
 
     context = {
+        'bookings': bookings,
+        'total_bookings': bookings.count(),
+        'confirmed_bookings': bookings.filter(status='CONFIRMED').count(),
+        'pending_bookings': bookings.filter(status='NEW').count(),
+        'form': form,
+        # Добавляем данные графиков в контекст
         'total_revenue': total_revenue,
-        'labels': labels,
-        'data': data,
-        'recent_bookings': recent_bookings,
+        'chart_labels': chart_labels,
+        'chart_data': chart_data,
     }
-    return render(request, 'core/analytics.html', context)
-
+    
+    return render(request, 'core/admin_dashboard.html', context)
 # ==========================================
 # АВТОРИЗАЦИЯ
 # ==========================================
@@ -138,27 +148,50 @@ def is_admin(user):
 
 @user_passes_test(is_admin, login_url='/admin/')
 def admin_dashboard(request):
-    # 1. Обработка добавления нового номера (если пришла форма)
+    # 1. Обработка формы добавления номера
     if request.method == 'POST':
         form = RoomForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()
             messages.success(request, 'Номер успешно добавлен!')
-            return redirect('admin_dashboard') # Перезагружаем страницу, чтобы очистить форму
+            return redirect('admin_dashboard')
     else:
         form = RoomForm()
 
-    # 2. Сбор статистики и получение списка бронирований
-    # Сначала получаем queryset bookings
+    # 2. Получаем все брони
     bookings = Booking.objects.all().select_related('room', 'user').order_by('-created_at')
     
-    # Теперь используем его для подсчетов (ошибка была здесь, так как bookings использовалась до объявления)
+    # 3. Считаем статистику для карточек
+    total_bookings_count = bookings.count()
+    confirmed_bookings_count = bookings.filter(status='CONFIRMED').count()
+    pending_bookings_count = bookings.filter(status='NEW').count()
+    
+    # 4. Считаем ВЫРУЧКУ (для новой карточки)
+    total_revenue = Booking.objects.filter(status='CONFIRMED').aggregate(
+        total=Sum('room__price')
+    )['total'] or 0
+
+    # 5. Готовим данные для ГРАФИКА (по месяцам)
+    bookings_by_month = Booking.objects.filter(
+        status__in=['NEW', 'CONFIRMED']
+    ).annotate(
+        month=TruncMonth('created_at')
+    ).values('month').annotate(
+        count=Count('id')
+    ).order_by('month')
+
+    chart_labels = [item['month'].strftime('%B %Y') for item in bookings_by_month]
+    chart_data = [item['count'] for item in bookings_by_month]
+
     context = {
         'bookings': bookings,
-        'total_bookings': bookings.count(),
-        'confirmed_bookings': bookings.filter(status='CONFIRMED').count(),
-        'pending_bookings': bookings.filter(status='NEW').count(),
-        'form': form,  # Обязательно передаем форму в шаблон
+        'total_bookings': total_bookings_count,
+        'confirmed_bookings': confirmed_bookings_count,
+        'pending_bookings': pending_bookings_count,
+        'total_revenue': total_revenue,      # Передаем выручку
+        'chart_labels': chart_labels,        # Передаем метки графика
+        'chart_data': chart_data,            # Передаем данные графика
+        'form': form,
     }
     
     return render(request, 'core/admin_dashboard.html', context)
