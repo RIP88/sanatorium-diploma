@@ -154,3 +154,24 @@ footer {
     margin-top: 80px;
     text-align: center;
 }
+
+/* Фиксируем высоту меню */
+.navbar {
+    height: 70px; /* Меняй это число: 60px - меньше, 80px - больше */
+    min-height: 70px;
+}
+
+/* Настраиваем логотип */
+.navbar-brand img {
+    max-height: 90px; /* Логотип может быть БОЛЬШЕ, чем высота меню (будет выступать вверх/вниз) */
+    width: auto;
+    object-fit: contain;
+}
+
+/* Центрируем логотип вертикально, если он больше высоты меню */
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    padding-top: 0;
+    padding-bottom: 0;
+}

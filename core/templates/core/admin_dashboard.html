@@ -2,207 +2,440 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Панель администратора</title>
-    <!-- Подключаем Bootstrap для красоты -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель администратора | Лесная Сказка</title>
+    
+    <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Иконки FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Шрифт Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        body { background-color: #f8f9fa; }
-        .card-stat { border-radius: 10px; border: none; color: white; }
-        .bg-primary-custom { background-color: #0d6efd; }
-        .bg-success-custom { background-color: #198754; }
-        .bg-warning-custom { background-color: #ffc107; color: #000; }
-        .table-container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f6f9;
+            color: #333;
+        }
+
+        /* Боковая панель */
+        .sidebar {
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding-top: 20px;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        .sidebar-brand {
+            font-size: 1.4rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+            text-decoration: none;
+            display: block;
+        }
+        
+        .sidebar-brand img {
+            height: 60px;
+            margin-bottom: 10px;
+            filter: brightness(0) invert(1); /* Делаем лого белым */
+        }
+
+        .sidebar-menu a {
+            padding: 15px 25px;
+            display: block;
+            color: #bdc3c7;
+            text-decoration: none;
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+            font-weight: 500;
+        }
+
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background-color: rgba(255,255,255,0.1);
+            color: white;
+            border-left-color: #27ae60;
+        }
+
+        .sidebar-menu i {
+            width: 25px;
+            margin-right: 10px;
+        }
+
+        /* Основной контент */
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+        }
+
+        /* Карточки статистики */
+        .stat-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .stat-card .card-body {
+            padding: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: white;
+        }
+
+        .bg-gradient-primary { background: linear-gradient(45deg, #4e73df, #224abe); }
+        .bg-gradient-success { background: linear-gradient(45deg, #1cc88a, #13855c); }
+        .bg-gradient-warning { background: linear-gradient(45deg, #f6c23e, #dda20a); }
+        .bg-gradient-info { background: linear-gradient(45deg, #36b9cc, #258391); }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #5a5c69;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #858796;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        /* Таблица */
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 25px;
+            margin-top: 30px;
+        }
+
+        .table thead th {
+            background-color: #f8f9fc;
+            color: #4e73df;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            border: none;
+            padding: 15px;
+        }
+
+        .table tbody td {
+            padding: 15px;
+            vertical-align: middle;
+            color: #5a5c69;
+            border-bottom: 1px solid #e3e6f0;
+        }
+
+        .btn-action {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        
+        .btn-action:hover {
+            transform: scale(1.1);
+        }
+
+        /* Мобильная адаптивность */
+        @media (max-width: 768px) {
+            .sidebar { width: 70px; }
+            .sidebar-brand span, .sidebar-menu span { display: none; }
+            .sidebar-menu a { text-align: center; padding: 15px 0; }
+            .sidebar-menu i { margin: 0; font-size: 1.2rem; }
+            .main-content { margin-left: 70px; padding: 15px; }
+            .stat-card .card-body { flex-direction: column; text-align: center; }
+            .stat-icon { margin-bottom: 15px; }
+        }
     </style>
 </head>
 <body>
 
-<div class="container mt-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <!-- Заголовок -->
-        <h1>🛡️ Панель администратора</h1>
+    <!-- Боковая панель -->
+    <div class="sidebar">
+        <a href="{% url 'index' %}" class="sidebar-brand">
+            {% load static %}
+            <img src="{% static 'img/logo.png' %}" alt="Logo">
+            <span>Админ-панель</span>
+        </a>
         
-        <div>
-            <!-- КНОПКА ДОБАВИТЬ НОМЕР (Вставили сюда) -->
-            <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#addRoomModal">
-                ➕ Добавить номер
+        <div class="sidebar-menu">
+            <a href="{% url 'admin_dashboard' %}" class="active">
+                <i class="fas fa-tachometer-alt"></i> <span>Обзор</span>
+            </a>
+            <a href="{% url 'admin:index' %}">
+                <i class="fas fa-cogs"></i> <span>Настройки Django</span>
+            </a>
+            <a href="{% url 'index' %}" target="_blank">
+                <i class="fas fa-external-link-alt"></i> <span>На сайт</span>
+            </a>
+            <a href="{% url 'logout' %}" style="margin-top: auto; color: #e74a3b;">
+                <i class="fas fa-sign-out-alt"></i> <span>Выйти</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Основной контент -->
+    <div class="main-content">
+        
+        <!-- Заголовок и кнопка добавления -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="h3 mb-0 text-gray-800">Панель управления</h2>
+                <p class="text-muted mb-0">Обзор бронирований и статистики</p>
+            </div>
+            <button type="button" class="btn btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#addRoomModal">
+                <i class="fas fa-plus me-2"></i>Добавить номер
             </button>
+        </div>
 
-            <!-- Остальные кнопки -->
-            <a href="{% url 'admin:index' %}" class="btn btn-outline-secondary">Стандартная админка Django</a>
-            <a href="{% url 'index' %}" class="btn btn-outline-dark">На сайт</a>
-            <a href="{% url 'logout' %}" class="btn btn-danger">Выйти</a>
+        <!-- Карточки статистики -->
+        <div class="row mb-4">
+            <!-- Всего -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="stat-card">
+                    <div class="card-body">
+                        <div>
+                            <div class="stat-value">{{ total_bookings }}</div>
+                            <div class="stat-label">Всего броней</div>
+                        </div>
+                        <div class="stat-icon bg-gradient-primary">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Подтверждено -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="stat-card">
+                    <div class="card-body">
+                        <div>
+                            <div class="stat-value">{{ confirmed_bookings }}</div>
+                            <div class="stat-label">Подтверждено</div>
+                        </div>
+                        <div class="stat-icon bg-gradient-success">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Новые -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="stat-card">
+                    <div class="card-body">
+                        <div>
+                            <div class="stat-value">{{ pending_bookings }}</div>
+                            <div class="stat-label">Новые заявки</div>
+                        </div>
+                        <div class="stat-icon bg-gradient-warning">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Выручка -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="stat-card">
+                    <div class="card-body">
+                        <div>
+                            <div class="stat-value">{{ total_revenue }} ₽</div>
+                            <div class="stat-label">Выручка</div>
+                        </div>
+                        <div class="stat-icon bg-gradient-info">
+                            <i class="fas fa-ruble-sign"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- График -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm border-0 rounded-4">
+                    <div class="card-header bg-white py-3 rounded-top-4">
+                        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-chart-line me-2"></i>Динамика бронирований</h6>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="bookingChart" height="80"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Таблица -->
+        <div class="table-container">
+            <h5 class="mb-4 font-weight-bold text-gray-800"><i class="fas fa-list me-2"></i>Последние заявки</h5>
+            {% if bookings %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Номер</th>
+                                <th>Клиент</th>
+                                <th>Даты заезда/выезда</th>
+                                <th>Статус</th>
+                                <th class="text-end">Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for booking in bookings %}
+                            <tr>
+                                <td><span class="badge bg-light text-dark border">#{{ booking.id }}</span></td>
+                                <td class="fw-bold">{{ booking.room.title }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-circle bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width:30px; height:30px; font-size:12px;">
+                                            {{ booking.user.username|default:"Г"|first|upper }}
+                                        </div>
+                                        {{ booking.user.username|default:"Гость" }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <small class="text-muted">{{ booking.check_in|date:"d.m.Y" }}</small> 
+                                    <i class="fas fa-arrow-right mx-1 text-muted" style="font-size:10px;"></i> 
+                                    <small class="text-muted">{{ booking.check_out|date:"d.m.Y" }}</small>
+                                </td>
+                                <td>
+                                    {% if booking.status == 'NEW' %}
+                                        <span class="badge bg-warning text-dark px-3 py-2 rounded-pill">Новая</span>
+                                    {% elif booking.status == 'CONFIRMED' %}
+                                        <span class="badge bg-success px-3 py-2 rounded-pill">Подтверждено</span>
+                                    {% elif booking.status == 'CANCELLED' %}
+                                        <span class="badge bg-danger px-3 py-2 rounded-pill">Отменено</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ booking.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    {% if booking.status == 'NEW' %}
+                                        <a href="{% url 'change_status' booking.id 'CONFIRMED' %}" class="btn btn-action btn-success" title="Подтвердить"><i class="fas fa-check"></i></a>
+                                        <a href="{% url 'change_status' booking.id 'CANCELLED' %}" class="btn btn-action btn-danger" title="Отменить"><i class="fas fa-times"></i></a>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Заявок пока нет</p>
+                </div>
+            {% endif %}
         </div>
     </div>
 
-        <!-- Карточки со статистикой -->
-    <div class="row mb-4">
-        <!-- 1. Всего бронирований -->
-        <div class="col-md-3">
-            <div class="card card-stat bg-primary-custom p-3">
-                <h3>{{ total_bookings }}</h3>
-                <p>Всего бронирований</p>
-            </div>
-        </div>
-        <!-- 2. Подтверждено -->
-        <div class="col-md-3">
-            <div class="card card-stat bg-success-custom p-3">
-                <h3>{{ confirmed_bookings }}</h3>
-                <p>Подтверждено</p>
-            </div>
-        </div>
-        <!-- 3. Новых заявок -->
-        <div class="col-md-3">
-            <div class="card card-stat bg-warning-custom p-3">
-                <h3>{{ pending_bookings }}</h3>
-                <p>Новых заявок</p>
-            </div>
-        </div>
-        <!-- 4. Выручка (НОВАЯ КАРТОЧКА) -->
-        <div class="col-md-3">
-            <div class="card card-stat bg-info p-3 text-white">
-                <h3>{{ total_revenue }} ₽</h3>
-                <p>Общая выручка</p>
+    <!-- Модальное окно (Форма добавления) -->
+    <div class="modal fade" id="addRoomModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold">➕ Добавить новый номер</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        {{ form.as_p }}
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" class="btn btn-primary px-4">Сохранить</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
-    <!-- БЛОК С ГРАФИКОМ -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card shadow-sm">
-            <div class="card-header bg-white">
-                <h5 class="mb-0">📈 Динамика бронирований по месяцам</h5>
-            </div>
-            <div class="card-body">
-                <canvas id="bookingChart" height="80"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Подключаем библиотеку Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<!-- Скрипт для построения графика -->
-<script>
-    const ctx = document.getElementById('bookingChart').getContext('2d');
+    <!-- Скрипты -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    // Получаем данные из Django. 
-    // Если данных нет, создаем пустые массивы, чтобы не было ошибки JS.
-    const labels = {{ chart_labels|default:"[]"|safe }}; 
-    const dataValues = {{ chart_data|default:"[]"|safe }};
+    <script>
+        const ctx = document.getElementById('bookingChart').getContext('2d');
+        const labels = {{ chart_labels|default:"[]"|safe }}; 
+        const dataValues = {{ chart_data|default:"[]"|safe }};
 
-    // Проверяем, есть ли данные для отображения
-    if (labels.length > 0 && dataValues.length > 0) {
-        new Chart(ctx, {
-            type: 'line', 
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Количество заявок',
-                    data: dataValues,
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 2,
-                    tension: 0.3, // Плавность линий
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: { stepSize: 1 } // Только целые числа
+        if (labels.length > 0 && dataValues.length > 0) {
+            new Chart(ctx, {
+                type: 'line',
+                 {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Заявок',
+                         dataValues,
+                        backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                        borderColor: 'rgba(78, 115, 223, 1)',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: 'rgba(78, 115, 223, 1)',
+                        pointHoverBackgroundColor: 'rgba(78, 115, 223, 1)',
+                        pointHoverBorderColor: '#fff',
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { 
+                            beginAtZero: true, 
+                            ticks: { stepSize: 1 },
+                            grid: { borderDash: [2] }
+                        }
                     }
                 }
-            }
-        });
-    } else {
-        // Если данных нет, можно вывести сообщение в консоль или на страницу
-        console.log("Нет данных для отображения графика");
-        // Опционально: можно добавить текст внутрь canvas или рядом с ним
-        document.querySelector('.card-body').innerHTML = '<p class="text-muted text-center mb-0">Пока нет данных для построения графика</p>';
-    }
-</script>
-
-    <!-- Таблица бронирований -->
-    <div class="table-container">
-        <h2 class="mb-3">Все заявки</h2>
-        {% if bookings %}
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Номер</th>
-                        <th>Клиент</th>
-                        <th>Даты</th>
-                        <th>Статус</th>
-                        <th>Действия</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for booking in bookings %}
-                    <tr>
-                        <td>#{{ booking.id }}</td>
-                        <td><strong>{{ booking.room.title }}</strong></td>
-                        <td>{{ booking.user.username|default:"Гость" }}</td>
-                        <td>
-                            {{ booking.check_in|date:"d.m.Y" }} — {{ booking.check_out|date:"d.m.Y" }}
-                        </td>
-                        <td>
-                            {% if booking.status == 'NEW' %}
-                                <span class="badge bg-warning text-dark">Новая</span>
-                            {% elif booking.status == 'CONFIRMED' %}
-                                <span class="badge bg-success">Подтверждено</span>
-                            {% elif booking.status == 'CANCELLED' %}
-                                <span class="badge bg-danger">Отменено</span>
-                            {% else %}
-                                {{ booking.get_status_display }}
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if booking.status == 'NEW' %}
-                                <a href="{% url 'change_status' booking.id 'CONFIRMED' %}" class="btn btn-sm btn-success">✔</a>
-                                <a href="{% url 'change_status' booking.id 'CANCELLED' %}" class="btn btn-sm btn-danger">✖</a>
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <p class="text-muted">Заявок пока нет.</p>
-        {% endif %}
-    </div>
-</div>
-
-<!-- МОДАЛЬНОЕ ОКНО С ФОРМОЙ (Вставили сюда, в конец body) -->
-<div class="modal fade" id="addRoomModal" tabindex="-1" aria-labelledby="addRoomModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addRoomModalLabel">Новый номер</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-                <div class="modal-body">
-                    {{ form.as_p }}
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                    <button type="submit" class="btn btn-primary">Сохранить</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Скрипт Bootstrap (Обязательно для работы модального окна!) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
+            });
+        } else {
+            document.querySelector('#bookingChart').parentElement.innerHTML = '<div class="text-center py-4 text-muted">Нет данных для графика</div>';
+        }
+    </script>
 </body>
 </html>
