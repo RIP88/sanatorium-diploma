@@ -117,3 +117,23 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # Убираем предупреждения о первичных ключах
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# ==========================================
+# НАСТРОЙКИ ДЛЯ РАЗДАЧИ СТАТИКИ И МЕДИА
+# ==========================================
+import os
+
+# Указываем Django, где искать статические файлы для разработки
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
+# В режиме DEBUG=False Django будет сам отдавать статику и медиа
+if DEBUG:
+    from django.conf import settings
+    from django.conf.urls.static import static
+    
+    # Добавляем пути к статике и медиа в основные URL
+    urlpatterns = static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
