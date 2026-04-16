@@ -64,16 +64,26 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 
-DATABASES = {
-    'default': dj_database_url.config(
-        # Если переменной DATABASE_URL нет, используем SQLite по умолчанию
-        default='sqlite:///db.sqlite3',
-        conn_max_age=600,
-        # Важно: ssl_require=True только если мы используем Postgres. 
-        # Для SQLite этот параметр игнорируется, но лучше сделать проверку.
-        ssl_require=os.environ.get('DATABASE_URL') is not None
-    )
-}
+# --- НАЧАЛО БЛОКА БАЗЫ ДАННЫХ ---
+if os.environ.get('DATABASE_URL'):
+    # Если переменная задана (для PostgreSQL), используем её
+    import dj_database_url
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL'),
+            conn_max_age=600,
+            ssl_require=False
+        )
+    }
+else:
+    # Если переменной нет, используем SQLite (работает всегда)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+# --- КОНЕЦ БЛОКА БАЗЫ ДАННЫХ ---
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
