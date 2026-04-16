@@ -63,15 +63,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# Database
-import os
-import dj_database_url # Эту библиотеку мы добавим чуть позже
-
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL'),
+        # Если DATABASE_URL нет, используем локальный SQLite
+        default=os.environ.get('DATABASE_URL', 'sqlite:///db.sqlite3'),
         conn_max_age=600,
-        ssl_require=True
+        ssl_require=True  # Важно для облачных баз (Supabase), для SQLite игнорируется
     )
 }
 
