@@ -63,24 +63,26 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
+
+# НАСТРОЙКА БАЗЫ ДАННЫХ
 if os.environ.get('DATABASE_URL'):
-    # Если есть DATABASE_URL — используем PostgreSQL
-    import dj_database_url
+    # Если есть переменная DATABASE_URL (на сервере) — используем Supabase (PostgreSQL)
     DATABASES = {
         'default': dj_database_url.config(
             default=os.environ.get('DATABASE_URL'),
             conn_max_age=600,
-            ssl_require=False  # ← Отключаем SSL для безопасности
+            ssl_require=False  # Отключаем строгий SSL, чтобы избежать ошибок
         )
     }
 else:
-    # Иначе используем SQLite
+    # Если переменной нет (локально на компьютере) — используем SQLite
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
