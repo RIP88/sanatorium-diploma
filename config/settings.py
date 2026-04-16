@@ -65,10 +65,11 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
     'default': dj_database_url.config(
-        # Если DATABASE_URL нет, используем локальный SQLite
+        # Если переменная DATABASE_URL есть (на сервере), используем её.
+        # Если нет (локально или ошибка), используем SQLite.
         default=os.environ.get('DATABASE_URL', 'sqlite:///db.sqlite3'),
         conn_max_age=600,
-        ssl_require=True  # Важно для облачных баз (Supabase), для SQLite игнорируется
+        ssl_require=True
     )
 }
 
