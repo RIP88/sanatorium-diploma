@@ -503,5 +503,47 @@
             document.querySelector('#bookingChart').parentElement.innerHTML = '<div class="text-center py-4 text-muted">Нет данных для графика</div>';
         }
     </script>
+    <!-- Подключаем библиотеку Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // Получаем данные из контекста Django (они должны приходить из views.py)
+    const dates = {{ chart_labels|safe }};
+    const data = {{ chart_data|safe }};
+
+    const ctx = document.getElementById('bookingsChart').getContext('2d');
+    
+    // Если элемент canvas найден, рисуем график
+    if (ctx) {
+        new Chart(ctx, {
+            type: 'line', // Тип графика: линия
+            data: {
+                labels: dates, // Даты по оси X
+                datasets: [{
+                    label: 'Количество бронирований',
+                    data: data, // Данные по оси Y
+                    borderColor: 'rgba(54, 162, 235, 1)', // Цвет линии
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)', // Цвет под линией
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4 // Плавность линии
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1 // Шаг шкалы Y (целые числа)
+                        }
+                    }
+                }
+            }
+        });
+    } else {
+        console.error("Элемент canvas с id 'bookingsChart' не найден!");
+    }
+</script>
 </body>
 </html>
